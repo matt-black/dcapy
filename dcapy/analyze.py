@@ -6,7 +6,7 @@ Author: Matthew Black
 
 import pandas as pd
 import numpy as np
-from validate import dca_input_validation
+from dcapy.validate import dca_input_validation
 
 
 class DecisionCurveAnalysis:
@@ -31,8 +31,6 @@ class DecisionCurveAnalysis:
         --------
         A tuple (net_benefit, interventions_avoided) of pandas DataFrames
         """
-        self.net_benefit, self.interventions_avoided = analyze(data, outcome,
-                                                               predictors)
         return self.net_benefit, self.interventions_avoided
 
 

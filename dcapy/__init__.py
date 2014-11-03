@@ -1,1 +1,1 @@
-from analyze import DecisionCurveAnalysis, dca
+from dcapy.analyze import DecisionCurveAnalysis, dca
