@@ -9,15 +9,16 @@ Author: Matthew Black
 
 
 def dca_input_validation(data, outcome, predictors,
-                      x_start, x_stop, x_by,
-                      probability, harm, intervention_per):
+                         x_start, x_stop, x_by,
+                         probability, harm, intervention_per):
     """Performs input validation for the dca function
     Checks all relevant parameters, raises a ValueError if input is not valid
     
     Returns:
     --------
-    A tuple of length 4 (data, predictors, probability, harm) where each is the
-    newly updated or initialized version of its original input
+    (pd.DataFrame, [str], [bool], [float])
+        A tuple of length 4 (data, predictors, probability, harm) where each is the
+        newly updated or initialized version of its original input
     """
     data.dropna(axis=0)  #trim out cases with missing data
     #outcome must be coded as 0/1
@@ -40,7 +41,7 @@ def dca_input_validation(data, outcome, predictors,
     if probability is not None: 
         #check if the number of probabilities matches the number of predictors
         if len(predictors) != len(probability):
-            raise DCA_Error("Number of probabilites must match number of predictors")
+            raise DCAError("Number of probabilites must match number of predictors")
         #validate and possibly convert predictors based on probabilities
         data = _validate_predictors(data, outcome, predictors, probability)
     else:
@@ -50,7 +51,7 @@ def dca_input_validation(data, outcome, predictors,
     #if not specified, initialize the harm parameter
     if harm is not None:
         if len(predictors) != len(harm):
-            raise DCA_Error("Number of harms must match number of predictors")
+            raise DCAError("Number of harms must match number of predictors")
     else:
         harm = [0]*len(predictors)
 
@@ -67,17 +68,23 @@ def _validate_predictors(data, outcome, predictors, probability):
         if not isinstance(probability[i], bool):
             raise ValueError("Each element of probability list must be a boolean")
         #validate that the predictor name isn't 'all' or 'none'
-        if predictor[i] in ["all", "none"]:
+        if predictors[i] in ["all", "none"]:
             raise ValueError("prediction names cannot be equal to 'all' or 'none'")
 
-        if probability[i] == True:
+        if probability[i]:
             #validate that any predictors with probability TRUE are b/t 0 and 1
             if (max(data[predictors[i]]) > 1) or (min(data[predictors[i]]) < 0):
                 raise ValueError("{} must be between 0 and 1"
-                                .format(predictors[i]))
+                                 .format(predictors[i]))
         else:
             #predictor is not a probability, convert with logistic regression
             model = sm.Logit(data[outcome], data[predictors[i]])
             data[predictors[i]] = model.fit().y_pred
     
     return data
+
+
+class DCAError(Exception):
+    """Exception raised by DCA functions
+    """
+    pass
