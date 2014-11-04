@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{42993238-34c7-454e-b98d-de7ff0f9e0c4}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>run_tests.py</StartupFile>
+    <StartupFile>test\calc_test.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -21,24 +21,33 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="dcapy\analyze.py" />
+    <Compile Include="dcapy\algo.py" />
+    <Compile Include="dcapy\calc.py" />
     <Compile Include="dcapy\validate.py" />
     <Compile Include="dcapy\__init__.py" />
-    <Compile Include="run_tests.py" />
     <Compile Include="setup.py" />
-    <Compile Include="test\test.py" />
+    <Compile Include="test\calc_test.py" />
+    <Compile Include="test\dca_test.py" />
+    <Compile Include="test\support.py" />
     <Compile Include="test\__init__.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="dcapy" />
     <Folder Include="test\" />
+    <Folder Include="test\resource\" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="{e4f59e21-3403-4bde-af2b-7ab04cefa83f}\3.4" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include=".gitignore" />
+    <Content Include="DESCRIPTION.rst" />
+    <Content Include="dev-requirements.txt" />
     <Content Include="README.md" />
-    <Content Include="test\dca.csv" />
+    <Content Include="requirements.txt" />
+    <Content Include="test\resource\dca.csv" />
+    <Content Include="test\resource\dca.r" />
+    <Content Include="test\resource\stdca.R" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />

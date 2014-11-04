@@ -21,6 +21,7 @@ def dca(data, outcome, predictors,
         the data set to analyze
     outcome : str
         the column of the data frame to use as the outcome
+        this must be coded as a boolean (T/F) or (0/1)
     predictors : str OR list(str)
         the column(s) that will be used to predict the outcome
     thresh_lb : float
@@ -30,12 +31,16 @@ def dca(data, outcome, predictors,
     thresh_step : float
         step size for the set of threshold probabilities [x_start:x_stop]
     probability : bool or list(bool)
+        whether the outcome is coded as a probability
+        probability must have the same length as the predictors list
     harm : float or list(float)
+        the harm associated with each predictor
+        harm must have the same length as the predictors list
     intervention_per : int
 
     Returns
     -------
-    pd.DataFrame, pd.DataFrame
+    tuple(pd.DataFrame, pd.DataFrame)
         A tuple of length 2 with net_benefit, interventions_avoided
         net_benefit : TODO
         interventions_avoided : TODO
@@ -49,9 +54,9 @@ def dca(data, outcome, predictors,
         #need to convert to a list
         predictors = [predictors]
 
-    ##CALCULATE NET BENEFIT
-    num_observations = len(data[outcome])
-    event_rate = mean(data[outcome])
+    #calculate useful constants for the net benefit calculation
+    num_observations = len(data[outcome])  # number of observations in data set
+    event_rate = mean(data[outcome])  # the rate at which the outcome happens
 
     #create DataFrames for holding results
     net_benefit, interventions_avoided = \
@@ -59,7 +64,7 @@ def dca(data, outcome, predictors,
     for i in range(0, len(predictors)):  # for each predictor
         net_benefit[predictors[i]] = 0.00  # initialize new column of net_benefits
 
-        for j in range(0, len(net_benefit['threshold'])):  # for each observation
+        for j in range(0, len(net_benefit['threshold'])):  # for each threshold value
             #calculate true/false positives
             true_positives, false_positives = \
                 calc_tf_positives(data, outcome, predictors[i],
@@ -72,13 +77,17 @@ def dca(data, outcome, predictors,
                                       num_observations)
             net_benefit.set_value(j, predictors[i], net_benefit_value)
 
-        #calculate interventions_avoided
+        #calculate interventions_avoided for the predictor
         interventions_avoided[predictors[i]] = calculate_interventions_avoided(
             predictors[i], net_benefit, intervention_per,
             interventions_avoided['threshold'])
 
     #TODO: implement smoothing with loess function
 
+    #reindex the dataframes so that the threshold values are the index
+    net_benefit.index = net_benefit['threshold']
+    interventions_avoided.index = interventions_avoided['threshold']
+    
     return net_benefit, interventions_avoided
 
 

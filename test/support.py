@@ -10,7 +10,7 @@ import pandas as pd
 import pandas.rpy.common as pdcom
 import rpy2.robjects as ro
 from os import path
-from dcapy import dca as py_dca
+from dcapy.algo import dca as py_dca
 
 root_test_dir = path.dirname(path.realpath(__file__))
 resources_dir = path.join(root_test_dir, 'resource')
@@ -67,8 +67,8 @@ class RCompareTest(unittest.TestCase):
         """Performs input validation and converts any Python objects to R objects
         for use when calling into the R function
 
-        Returns:
-        --------
+        Returns
+        -------
         A dictionary of keyword-value arguments to pass to the R function
         """
         #data setup and validation
@@ -152,9 +152,9 @@ def unpack_r_results_list(res_list):
     r_nb = r_nb['net.benefit']  #unpack dataFrame from dict
     r_ia = pdcom.convert_robj(res_list.rx('interventions.avoided'))
     r_ia = r_ia['interventions.avoided']
-    #reindex the df's to 0-based indexing to match Python results
-    r_nb.index = range(len(r_nb['threshold']))
-    r_ia.index = range(len(r_ia['threshold']))
+    #reindex the df's with their threshold columns
+    r_nb.index = r_nb['threshold']
+    r_ia.index = r_ia['threshold']
     return r_nb, r_ia
 
 

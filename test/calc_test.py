@@ -7,18 +7,38 @@ Author: Matthew Black
 """
 
 import unittest
+import pandas as pd
+from os import path
+import dcapy.calc as calc
+from test.support import resources_dir
+
 
 class CalcTfPositivesTest(unittest.TestCase):
-    """Tests the accuracy of the calc_tf_positives() function in calc.py
+    """Tests the accuracy of the calc_tf_positives() function
     """
 
-    def setUp(self):
-        pass
+    data = pd.read_csv(path.join(resources_dir, "dca.csv"))
+
+    def test_univariate(self):
+        """Tests the function for an univariate analysis
+        """
+        outcome = 'cancer'
+        predictor = 'famhistory'
+        net_benefit_threshold = pd.Series(data=calc.frange(0.1,0.99,0.1))
+        true_pos, false_pos = calc.calc_tf_positives(self.data, outcome,
+                                                     predictor, net_benefit_threshold, j)
+        #assersions -- got values from R debugging
+        self.assertEqual(true_pos, 24)
+        self.assertEqual(false_pos, 91)
+
 
 class CalcNetBenefitTest(unittest.TestCase):
-    """Tests the accuracy of the calculate_net_benefit() function in calc.py
+    """Tests the accuracy of the calculate_net_benefit() function
     """
 
     def setUp(self):
         pass
 
+
+if __name__ == "__main__":
+    unittest.main()

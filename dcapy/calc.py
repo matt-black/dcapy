@@ -56,7 +56,7 @@ def calc_tf_positives(data, outcome, predictor, net_benefit_threshold, j):
 
     Returns
     -------
-    (float, float)
+    tuple(float, float)
         the number of true positives, false positives
     """
     true_positives = false_positives = 0
@@ -106,7 +106,8 @@ def calculate_net_benefit(index, net_benefit_threshold, harm,
 
     Returns
     -------
-    the value for the net benefit at 'index' for the predictor
+    float
+        value for the net benefit at 'index' for the predictor
     """
     #normalize the true/false positives by the number of observations
     tp_norm = true_positives/num_observations
@@ -181,4 +182,3 @@ def mean(iterable):
         the arithmetic mean of the iterable
     """
     return sum(iterable)/len(iterable)
-
