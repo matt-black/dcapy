@@ -1,5 +1,7 @@
 """
-Functional test for the dca analyzer
+Decision Curve Analysis
+
+Functional, end-to-end tests of the accuracy of the DCA algorithm
 
 Author: Matthew Black
 """
@@ -33,7 +35,7 @@ class UnivariateAnalysisTest(RCompareDCATest):
                 print('r: {0} | p: {1}'
                       .format(nb, self.p_net_ben['famhistory'][i]))
                 assert(False)
-        for i, ia in enumerate(r_ia['famhistory']):
+        for i, ia in enumerate(self.r_int_avoid['famhistory']):
             if self.p_int_avoid['famhistory'][i] != ia:
                 print('interv {}'.format(i))
                 print('r: {0} | p: {1}'

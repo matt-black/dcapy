@@ -14,13 +14,13 @@ def dca_input_validation(data, outcome, predictors,
     """Performs input validation for the dca function
     Checks all relevant parameters, raises a ValueError if input is not valid
     
-    Returns:
-    --------
-    (pd.DataFrame, [str], [bool], [float])
+    Returns
+    -------
+    pd.DataFrame, [str], [bool], [float]
         A tuple of length 4 (data, predictors, probability, harm) where each is the
         newly updated or initialized version of its original input
     """
-    data.dropna(axis=0)  #trim out cases with missing data
+    data.dropna(axis=0)  # trim out cases with missing data
     #outcome must be coded as 0/1
     if (max(data[outcome]) > 1) or (min(data[outcome]) < 0):
         raise ValueError("outcome cannot be less than 0 or greater than 1")
@@ -55,7 +55,7 @@ def dca_input_validation(data, outcome, predictors,
     else:
         harm = [0]*len(predictors)
 
-    return data, predictors, probability, harm  #return any mutated objects
+    return data, predictors, probability, harm  # return any mutated objects
 
 
 def _validate_predictors(data, outcome, predictors, probability):
