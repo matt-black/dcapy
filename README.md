@@ -22,6 +22,13 @@ Developers can install via git/pip:
 	cd dcapy
 	pip install -r dev-requirements.txt
 
+## Run Tests
+
+Tests are held in the /test folder, along with resources
+To run the tests, run the following command from this project's root directory:
+	
+	python -m unittest discover
+
 ## Using dcapy
 
 See example IPython notebooks in the `/example` folder. 

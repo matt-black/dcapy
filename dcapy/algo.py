@@ -72,7 +72,7 @@ def dca(data, outcome, predictors,
 
             #calculate net benefit
             net_benefit_value = \
-                calculate_net_benefit(j, net_benefit['threshold'],
+                calculate_net_benefit(j, net_benefit['threshold'], harm[i],
                                       true_positives, false_positives,
                                       num_observations)
             net_benefit.set_value(j, predictors[i], net_benefit_value)
@@ -87,7 +87,7 @@ def dca(data, outcome, predictors,
     #reindex the dataframes so that the threshold values are the index
     net_benefit.index = net_benefit['threshold']
     interventions_avoided.index = interventions_avoided['threshold']
-    
+
     return net_benefit, interventions_avoided
 
 

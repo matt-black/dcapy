@@ -93,8 +93,8 @@ def calculate_net_benefit(index, net_benefit_threshold, harm,
     ----------
     net_benefit_threshold : pd.Series
         the 'threshold' column of the net_benefit dataframe for the analysis
-    harm : list(float)
-        the harm array for the analysis
+    harm : float
+        the harm value for the predictor
     true_positives : float
         the number of true positives for the given predictor
     false_positives : float
@@ -115,7 +115,7 @@ def calculate_net_benefit(index, net_benefit_threshold, harm,
     #calculate the multiplier for the false positives
     multiplier = net_benefit_threshold[index]/(1-net_benefit_threshold[index])
 
-    return tp_norm - fp_norm*multiplier - harm[index]
+    return tp_norm - fp_norm*multiplier - harm
 
 
 def calculate_interventions_avoided(predictor, net_benefit, intervention_per,
@@ -138,7 +138,7 @@ def calculate_interventions_avoided(predictor, net_benefit, intervention_per,
     pd.Series
         the number of interventions avoided for this predictor
     """
-    net_benefit_factor = net_benefit[predictor] - net_benefit[all]
+    net_benefit_factor = net_benefit[predictor] - net_benefit['all']
     interv_denom = (interventions_avoided_threshold/(1-interventions_avoided_threshold))
 
     return net_benefit_factor * intervention_per/interv_denom
@@ -179,6 +179,7 @@ def mean(iterable):
     Returns
     -------
     float
-        the arithmetic mean of the iterable
+        the arithmetic mean of the def __iter__(self):
+    return iter()able
     """
     return sum(iterable)/len(iterable)
