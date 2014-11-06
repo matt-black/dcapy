@@ -63,13 +63,13 @@ def dca(data, outcome, predictors,
     #create DataFrames for holding results
     net_benefit, interventions_avoided = \
         initialize_result_dataframes(event_rate, thresh_lb, thresh_ub, thresh_step)
-    for i in range(0, len(predictors)):  # for each predictor
-        net_benefit[predictors[i]] = 0.00  # initialize new column of net_benefits
+    for i, predictor in enumerate(predictors):  # for each predictor
+        net_benefit[predictor] = 0.00  # initialize new column of net_benefits
 
         for j in range(0, len(net_benefit['threshold'])):  # for each threshold value
             #calculate true/false positives
             true_positives, false_positives = \
-                calc_tf_positives(data, outcome, predictors[i],
+                calc_tf_positives(data, outcome, predictor,
                                   net_benefit['threshold'], j)
 
             #calculate net benefit
@@ -77,11 +77,11 @@ def dca(data, outcome, predictors,
                 calculate_net_benefit(j, net_benefit['threshold'], harm[i],
                                       true_positives, false_positives,
                                       num_observations)
-            net_benefit.set_value(j, predictors[i], net_benefit_value)
+            net_benefit.set_value(j, predictor, net_benefit_value)
 
         #calculate interventions_avoided for the predictor
-        interventions_avoided[predictors[i]] = calculate_interventions_avoided(
-            predictors[i], net_benefit, intervention_per,
+        interventions_avoided[predictor] = calculate_interventions_avoided(
+            predictor, net_benefit, intervention_per,
             interventions_avoided['threshold'])
 
         #smooth the predictor, if specified

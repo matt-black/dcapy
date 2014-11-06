@@ -30,9 +30,12 @@
     <Compile Include="dcapy\validate.py" />
     <Compile Include="dcapy\__init__.py" />
     <Compile Include="setup.py" />
-    <Compile Include="test\calc_test.py" />
+    <Compile Include="test\test_calc.py" />
     <Compile Include="test\r_analysis.py" />
-    <Compile Include="test\test_dca.py" />
+    <Compile Include="test\test_algo.py" />
+    <Compile Include="test\test_dca_class.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="test\__init__.py" />
   </ItemGroup>
   <ItemGroup>

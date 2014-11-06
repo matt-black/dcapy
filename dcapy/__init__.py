@@ -1,47 +1,70 @@
+"""
+Decision Curve Analysis
+
+Author: Matthew Black
+"""
+
+import pandas as pd
 import dcapy.algo as algo
 
+
 class DecisionCurveAnalysis:
-    """
+    """Class for running decision curve analysis
     """
     
     #universal parameters for DCA
-    data = None  # the data set to use
-    outcome = None
-    predictors = None  
-    #threshold boundaries
-    thresh_lb = 0.01
-    thresh_ub = 0.99
-    thresh_step = 0.01
-    #metrics for the predictors
-    probability = None
-    harm = None
-    #other metrics
-    intervention_per = 100
-
+    _common_args = {'data' : None,
+                    'outcome' : None,
+                    'predictors' : None,
+                    'thresh_lb' : 0.01,
+                    'thresh_ub' : 0.99,
+                    'thresh_step' : 0.01,
+                    'probability' : None,
+                    'harm' : None,
+                    'intervention_per' : 100}  
+    
     #stdca-specific attributes
-    tt_outcome = None
-    time_point = None
-    cmp_risk = False
-
+    _stdca_args = {'tt_outcome' : None,
+                   'time_point' : None,
+                   'cmp_risk' : False}
+    
     def __init__(self, algorithm='dca', **kwargs):
-        valid_keywords = None
-        if algorithm == 'dca':
-            from dcapy.validate import dca_keywords
-            valid_keywords = dca_keywords
-            self.algo = algo.dca
-        elif algorithm == 'stdca':
-            from dcapy.validate import stdca_keywords
-            valid_keywords = stdca_keywords
-            self.algo = algo.stdca
+        """Initialization
 
-        #set attributes based on keywords passed in
+        Parameters
+        ----------
+        algorithm : str
+            the algorithm to use, valid options are 'dca' or 'stdca'
+        **kwargs : 
+            keyword arguments to populate instance attributes that will be used in analysis
+        """
+        if algorithm not in ['dca', 'stdca']:
+            raise ValueError("did not specify a valid algorithm, only 'dca' and 'stdca' are valid")
+        self.algorithm = algorithm
+
+        #set args based on keywords passed in
         for kw in kwargs:
-            try:  # to set the attribute matching that keyword
-                setattr(self, kw, kwargs[kw])
-            except AttributeError as e:
-                raise ValueError("{kw} is not a valid keyword for DCA"
+            if kw in self._common_args:
+                self._common_args[kw] = kwargs[kw]
+                continue
+            elif kw in self._stdca_args:
+                self._stdca_args[kw] = kwargs[kw]
+            else:
+                raise ValueError("{kw} is not a valid DCA keyword"
                                  .format(kw=repr(kw)))
+        
+    def _args_dict(self):
+        """Forms the arguments to pass to the analysis algorithm
+        """
+        if self.algorithm == 'dca':
+            return self._common_args
+        else:
+            from collections import Counter
+            return dict(Counter(self._common_args) + Counter(self._stdca_args))
 
+    def _algo(self):
+        return algo.dca if self.algorithm == 'dca' else algo.stdca
+            
     def run(self, return_results=False):
         """Performs the analysis
 
@@ -49,31 +72,72 @@ class DecisionCurveAnalysis:
         ----------
         return_results : bool
             if `True`, sets the results to the instance attribute `results`
-            if `False`, the function returns the results as a tuple
+            if `False` (default), the function returns the results as a tuple
 
         Returns
         -------
         tuple(pd.DataFrame, pd.DataFrame)
             Returns net_benefit, interventions_avoided if `return_results=True`
         """
-        nb, ia = self.algo(self.data, self.outcome, self.predictors,
-                           self.thresh_lb, self.thresh_ub, self.thresh_step,
-                           self.probability, self.harm, self.intervention_per)
+        nb, ia = self._algo()(**(self._args_dict()))
         if return_results:
             return nb, ia
         else:
             self.results = {'net benefit' : nb, 'interventions avoided' : ia}
     
+    def smooth_results(self, lowess_frac, return_results=False):
+        """Smooths the results using a LOWESS smoother
+        
+        Parameters
+        ----------
+        lowess_frac : float
+            the fraction of the endog value to use when smoothing
+        return_results : bool
+            if `True`, sets the results to the instance attribute `results`
+            if `False` (default), the function returns the results as a tuple
+        Returns
+        -------
+        tuple(pd.DataFrame, pd.DataFrame)
+            smoothed predictor dataFrames for results if `return_results=True`
+        """
+        from dcapy.calc import lowess_smooth_results
+        _nb = _ia = None
+        for predictor in self.predictors:
+            nb, ia = lowess_smooth_results(predictor, self.results['net benefit'],
+                                           self.results['interventions avoided'],
+                                           lowess_frac)
+            #concatenate results
+            _nb = pd.concat([_nb, nb], axis=1)
+            _ia = pd.concat([_ia, ia], axis=1)
+        if return_results:
+            return _nb, _ia
+        else:
+            self.results['net benefit'] = pd.concat(
+                [self.results['net benefit'], _nb], axis=1)
+            self.results['interventions avoided'] = pd.concat(
+                [self.results['interventions avoided'], _ia], axis=1)
+
     def plot_net_benefit(self, custom_axes=None, make_legend=True):
         """Plots the net benefit from the analysis
 
         Parameters
         ----------
+        custom_axes : list(float)
+            a length-4 list of dimensions for the plot, `[x_min, x_max, y_min, y_max]`
+        make_legend : bool
+            whether to include a legend in the plot
 
         Returns
         -------
+        matplotlib.rc_context
+
         """
-        import matplotlib.pyplot as plt
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError as e:
+            e.args += ("plotting the analysis requires matplotlib")
+            raise
+            
         try:
             net_benefit = getattr(self, 'results')
         except AttributeError:
@@ -85,14 +149,28 @@ class DecisionCurveAnalysis:
     def plot_interventions_avoided(self, custom_axes=None, make_legend=True):
         """Plots the interventions avoided per `interventions_per` patients
 
+        Notes
+        -----
+        Generated plots are 'interventions avoided per `intervention_per` patients' vs. threshold
+
         Parameters
         ----------
+        custom_axes : list(float)
+            a length-4 list of dimensions for the plot, `[x_min, x_max, y_min, y_max]`
+        make_legend : bool
+            whether to include a legend in the plot
 
         Returns
         -------
-
+        matplotlib.rc_context
+            context manager for working with the newly-created plot
         """
-        import matplotlib.pyplot as plt
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError as e:
+            e.args += ("plotting the analysis requires matplotlib")
+            raise
+
         try:
             interv_avoid = getattr(self, 'results')
         except AttributeError:
@@ -100,7 +178,297 @@ class DecisionCurveAnalysis:
         iaplot = plt.plot(interv_avoid)
         #TODO: graph prettying/customization
         return iaplot
+    
+    @property
+    def data(self):
+        """The data set to analyze
 
+        Returns
+        -------
+        pd.DataFrame
+        """
+        return self._common_args['data']
+    @data.setter
+    def data(self, value):
+        """Set the data for the analysis
+
+        Parameters
+        ----------
+        value : pd.DataFrame
+            the data to analyze
+        """
+        if not isinstance(value, pd.DataFrame):
+            raise TypeError("data must be a pandas DataFrame")
+        self._common_args['data'] = value
+
+    @property
+    def outcome(self):
+        """The outcome to use for the analysis
+        """
+        return self._common_args['outcome']
+    @outcome.setter
+    def outcome(self, value):
+        """Sets the column in the dataset to use as the outcome for the analysis
+        
+        Parameters
+        ----------
+        value : str
+            the name of the column in `data` to set as `outcome`
+        """
+        self._common_args['outcome'] = value
+
+    @property
+    def predictors(self):
+        """The predictors to use
+
+        Returns
+        -------
+        list(str)
+            A list of all predictors for the analysis
+        """
+        return self._common_args['predictors']
+    @predictors.setter
+    def predictors(self, value):
+        """Sets the predictors to use for the analysis
+
+        Parameters
+        ----------
+        value : list(str)
+            the list of predictors to use
+        """
+        if isinstance(value, str):
+            value = [value]
+        self._common_args['predictors'] = value
+
+    def threshold_bound(self, bound):
+        """Gets the specified threshold boundary
+
+        Parameters
+        ----------
+        bound : str
+            the boundary to get; valid values are "lower" or "upper"
+
+        Returns
+        -------
+        float
+            the current value of that boundary
+        """
+        mapping = {'lower' : 'thresh_lb',
+                   'upper' : 'thresh_ub'}
+        try:
+            return self._common_args[mapping[bound]]
+        except KeyError:
+            raise ValueError("did not specify a valid boundary")
+
+    def set_threshold_bounds(self, lower, upper, step=None):
+        """Sets the threshold boundaries (thresh_*) for the analysis
+
+        Notes
+        -----
+        Passing `None` for any of the parameters will skip that parameter
+        The analysis will be run over all steps, x, lower <= x <= upper
+
+        Parameters
+        ----------
+        lower : float
+            the lower boundary
+        upper : float
+            the upper boundary
+        step : float
+            the increment between calculations
+        """
+        if lower is not None:
+            self._common_args['thresh_lb'] = lower
+        if upper is not None:
+            self._common_args['thresh_ub'] = upper
+        if step is not None:
+            self._common_args['thresh_step'] = step
+
+    @property
+    def probabilities(self):
+        """The list of probability values for each predictor
+
+        Returns
+        -------
+        list(bool)
+            the probability list
+        """
+        if self._common_args['probability'] is None:
+            try:  #initialize the probability list based on # predictors
+                num_pred = len(self._common_args['predictors'])
+                self._common_args['probability'] = [True]*num_pred
+            except TypeError:  #predictors was None
+                #TODO: better error msg here
+                raise DCAError("must initialize predictors first!")
+        return self._common_args['probability']
+    @probabilities.setter
+    def probabilities(self, value):
+        """Sets the probabilities list for the analysis
+
+        Notes
+        -----
+        The length of the parameter `value` must match that of the predictors
+
+        Parameters
+        ----------
+        value : list(bool)
+            a list of probabilities to assign, one for each predictor
+        """
+        if len(value) != len(predictors):
+            raise DCAError("number of probabilities must match number of predictors")
+        self._common_args['probability'] = value
+
+    def set_probability_for_predictor(self, predictor, probability):
+        """Sets the probability value for the given predictor
+
+        Parameters
+        ----------
+        predictor : str
+            the predictor to set the probability value for
+        probability : bool
+            the probability value
+        """
+        curr_probs = self.probabilities  # make sure probabilities initialized
+        try:
+            ind = self._common_args['predictors'].index(predictor)
+        except ValueError as e:
+            e.args += ("did not specify a valid predictor")
+            raise
+        self._common_args['probability'][ind] = probability
+
+    @property
+    def harms(self):
+        """The list of harm values for the predictors
+
+        Returns
+        -------
+        list(float)
+        """
+        if self._common_args['harm'] is None:
+            try:  #initialize harms based on # predictors
+                num_pred = len(self._common_args['predictors'])
+                self._common_args['harm'] = [0]*num_pred
+            except TypeError:  #predictors was None
+                #TODO better error msg here
+                raise DCAError("must initialize predictors first!")
+        return self._common_args['harm']
+    @harms.setter
+    def harms(self, value):
+        """Sets the list of harm values to be used
+
+        Notes
+        -----
+        The length of the parameter `value` must match that of the predictors
+
+        Parameters
+        ----------
+        value : list(float)
+            a list of floats to assign, one for each predictor
+        """
+        if len(value) != len(predictors):
+            raise DCAError("number of harms must match number of predictors")
+        self._common_args['harm'] = value
+
+    def set_harm_for_predictor(self, predictor, harm):
+        """Sets the harm value for the given predictor
+
+        Parameters
+        ----------
+        predictor : str
+            the predictor to set the harm value for
+        harm : float
+            the harm value (must be between 0 and 1)
+        """
+        curr_harms = self.harms  # make sure harms is initialized
+        try:
+            ind = self._common_args['harm'].index(predictor)
+        except ValueError as e:
+            e.args += ("did not specify a valid predictor")
+            raise
+        self._common_args['harm'][ind] = harm
+
+    @property
+    def intervention_per(self):
+        """The number of patients per intervention
+
+        Returns
+        -------
+        int
+        """
+        return self._common_args['intervention_per']
+    @intervention_per.setter
+    def intervention_per(self, value):
+        """Sets the value of the number of patients to assume per intervention
+
+        Parameters
+        ----------
+        value : int
+        """
+        self._common_args['intervention_per'] = value
+
+    @property
+    def time_to_outcome(self):
+        """The column in the data used to specify the time taken to reach the outcome
+        
+        Returns
+        -------
+        str
+        """
+        return self._common_args['tt_outcome']
+    @time_to_outcome.setter
+    def time_to_outcome(self, value):
+        """Sets the column to use as the `tt_outcome` for the analysis
+
+        Parameters
+        ----------
+        value : str
+        """
+        if value in data.columns:
+            self._stdca_args['tt_outcome'] = value
+        else:
+            raise ValueError("time to outcome must be a valid column in the data set")
+
+    @property
+    def time_point(self):
+        """The time point of interest
+
+        Returns
+        -------
+        float
+        """
+        return self._stdca_args['time_point']
+    @time_point.setter
+    def time_point(self, value):
+        """Sets the time point of interest
+
+        Parameters
+        ----------
+        value : float
+        """
+        self._stdca_args['time_point'] = value
+
+    @property
+    def competing_risk(self):
+        """Run competing risk analysis
+
+        Returns
+        -------
+        bool
+        """
+        return self._stdca_args['cmp_risk']
+    @competing_risk.setter
+    def competing_risk(self, value):
+        """Sets whether to run a competing risk analysis
+
+        Parameters
+        ----------
+        value : bool
+        """
+        if not isinstance(value, bool):
+            raise TypeError("competing risk must be a boolean value")
+        self._stdca_args['cmp_risk'] = value
 
 class DCAError(Exception):
+    """Exception raised to signal a problem within the DecisionCurveAnalysis class
+    """
     pass
