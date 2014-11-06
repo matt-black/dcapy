@@ -169,11 +169,6 @@ def unpack_r_results_list(res_list):
     r_nb = r_nb['net.benefit']  #unpack dataFrame from dict
     r_ia = pdcom.convert_robj(res_list.rx('interventions.avoided'))
     r_ia = r_ia['interventions.avoided']
-    #reindex the df's with their threshold columns
-    r_nb.index = r_nb['threshold']
-    del r_nb['threshold']
-    r_ia.index = r_ia['threshold']
-    del r_ia['threshold']
     return r_nb, r_ia
 
 

@@ -12,7 +12,8 @@ from dcapy.validate import dca_input_validation
 
 def dca(data, outcome, predictors,
         thresh_lb=0.01, thresh_ub=0.99, thresh_step=0.01,
-        probability=None, harm=None, intervention_per=100):
+        probability=None, harm=None, intervention_per=100,
+        smooth_results=False, lowess_frac=0.10):
     """Performs decision curve analysis on the input data set
 
     Parameters
@@ -37,6 +38,11 @@ def dca(data, outcome, predictors,
         the harm associated with each predictor
         harm must have the same length as the predictors list
     intervention_per : int
+        TODO
+    smooth_results : bool
+        use lowess smoothing to smooth the result data series
+    lowess_frac : float
+        the fraction of the data used when estimating each endogenous value
 
     Returns
     -------
@@ -47,12 +53,8 @@ def dca(data, outcome, predictors,
     """
     #perform input validation
     data, predictors, probability, harm = dca_input_validation(
-        data, outcome, predictors, thresh_lb, thresh_ub, thresh_step, probability,
-        harm, intervention_per)
-
-    if isinstance(predictors, str):  # single predictor (univariate analysis)
-        #need to convert to a list
-        predictors = [predictors]
+        data, outcome, predictors, thresh_lb, thresh_ub, thresh_step, 
+        probability, harm, intervention_per, lowess_frac)
 
     #calculate useful constants for the net benefit calculation
     num_observations = len(data[outcome])  # number of observations in data set
@@ -82,11 +84,13 @@ def dca(data, outcome, predictors,
             predictors[i], net_benefit, intervention_per,
             interventions_avoided['threshold'])
 
-    #TODO: implement smoothing with loess function
-
-    #reindex the dataframes so that the threshold values are the index
-    net_benefit.index = net_benefit['threshold']
-    interventions_avoided.index = interventions_avoided['threshold']
+        #smooth the predictor, if specified
+        if smooth_results:
+            nb_sm, ia_sm = lowess_smooth_results(predictor, net_benefit, 
+                                                 interventions_avoided, lowess_frac)
+            #add the smoothed series to the dataframe
+            pd.concat([net_benefit, nb_sm], axis=1)
+            pd.concat([interventions_avoided, ia_sm], axis=1)
 
     return net_benefit, interventions_avoided
 

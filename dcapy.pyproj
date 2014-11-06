@@ -5,7 +5,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{42993238-34c7-454e-b98d-de7ff0f9e0c4}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>test\calc_test.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -13,6 +14,9 @@
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <InterpreterId>{e4f59e21-3403-4bde-af2b-7ab04cefa83f}</InterpreterId>
     <InterpreterVersion>3.4</InterpreterVersion>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <InterpreterArguments>-m unittest discover</InterpreterArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
@@ -27,8 +31,8 @@
     <Compile Include="dcapy\__init__.py" />
     <Compile Include="setup.py" />
     <Compile Include="test\calc_test.py" />
-    <Compile Include="test\dca_test.py" />
-    <Compile Include="test\support.py" />
+    <Compile Include="test\r_analysis.py" />
+    <Compile Include="test\test_dca.py" />
     <Compile Include="test\__init__.py" />
   </ItemGroup>
   <ItemGroup>

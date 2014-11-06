@@ -144,6 +144,50 @@ def calculate_interventions_avoided(predictor, net_benefit, intervention_per,
     return net_benefit_factor * intervention_per/interv_denom
 
 
+def lowess_smooth_results(predictor, net_benefit, interventions_avoided, 
+                          lowess_frac):
+    """Smooths the result data using local regression
+
+    This function uses the index of the passed in dataframes as exogenous
+    values for the smoothing
+
+    Parameters
+    ----------
+    net_benefit : pd.DataFrame
+        a dataframe of net benefit results
+    interventions_avoided : pd.DataFrame
+        a dataframe of interventions avoided results
+    predictors : str
+        the predictor to smooth for
+        (must match a column in both net_benefit/interventions_avoided dataframes)
+    lowess_frac : float
+        the fraction of the data used when estimating each endogenous value
+
+    Returns:
+    --------
+    tuple(pd.DataFrame, pd.DataFrame)
+        smoothed net_benefit and interventions_avoided dataframes
+    """
+    
+    #check that both dataframes have a 'predictor' column
+    if predictor not in net_benefit.columns.values or \
+        predictor not in interventions_avoided.columns.values:
+        raise ValueError("predictor must be a net_benefit and interventions_avoided column")
+
+    #call smoothing function
+    import statsmodels.api as sm
+    lowess = sm.nonparametric.lowess
+    smoothed_net_benefit = lowess(net_benefit[predictor], net_benefit.index.values,
+                                  frac=lowess_frac, missing='drop')
+    smoothed_interv = lowess(interventions_avoided[predictor],
+                             interventions_avoided.index.values,
+                             frac=lowess_frac, missing='drop')
+    return pd.Series(smooth_net_benefit, index=net_benefit['threshold'],
+                     name='{}_sm'.format(predictor)), pd.Series(
+                         smooth_interv, index=interventions_avoided['threshold'],
+                         name='{}_sm'.format(predictor))
+
+
 def frange(start, stop, step):
     """Generator that can create ranges of floats
 

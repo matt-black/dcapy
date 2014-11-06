@@ -10,7 +10,8 @@ Author: Matthew Black
 
 def dca_input_validation(data, outcome, predictors,
                          x_start, x_stop, x_by,
-                         probability, harm, intervention_per):
+                         probability, harm, intervention_per,
+                         lowess_frac):
     """Performs input validation for the dca function
     Checks all relevant parameters, raises a ValueError if input is not valid
     
@@ -25,6 +26,11 @@ def dca_input_validation(data, outcome, predictors,
     if (max(data[outcome]) > 1) or (min(data[outcome]) < 0):
         raise ValueError("outcome cannot be less than 0 or greater than 1")
     
+    #validate that predictors is a list
+    if isinstance(predictors, str):  # single predictor (univariate analysis)
+        #need to convert to a list
+        predictors = [predictors]
+
     #x_start, x_stop, and x_by must be between 0 and 1
     if x_start > 1 or x_start < 0:
         raise ValueError("x_start must be between 0 and 1")
@@ -55,6 +61,10 @@ def dca_input_validation(data, outcome, predictors,
     else:
         harm = [0]*len(predictors)
 
+    #check that 0 <= lowess_frac <= 1
+    if lowess_frac < 0 or lowess_frac > 1:
+        raise ValueError("Smoothing fraction must be between 0 and 1")
+
     return data, predictors, probability, harm  # return any mutated objects
 
 
@@ -66,7 +76,7 @@ def _validate_predictors(data, outcome, predictors, probability):
     for i in range(0, len(predictors)):
         #validate that the value is a boolean
         if not isinstance(probability[i], bool):
-            raise ValueError("Each element of probability list must be a boolean")
+            raise TypeError("Each element of probability list must be a boolean")
         #validate that the predictor name isn't 'all' or 'none'
         if predictors[i] in ["all", "none"]:
             raise ValueError("prediction names cannot be equal to 'all' or 'none'")

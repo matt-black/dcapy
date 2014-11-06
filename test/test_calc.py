@@ -10,7 +10,7 @@ import unittest
 import pandas as pd
 from os import path
 import dcapy.calc as calc
-from test.support import resources_dir
+from test.r_analysis import resources_dir
 
 
 class CalcTfPositivesTest(unittest.TestCase):
@@ -26,7 +26,7 @@ class CalcTfPositivesTest(unittest.TestCase):
         predictor = 'famhistory'
         net_benefit_threshold = pd.Series(data=calc.frange(0.1,0.99,0.1))
         true_pos, false_pos = calc.calc_tf_positives(self.data, outcome,
-                                                     predictor, net_benefit_threshold, j)
+                                                     predictor, net_benefit_threshold, 0)
         #assersions -- got values from R debugging
         self.assertEqual(true_pos, 24)
         self.assertEqual(false_pos, 91)

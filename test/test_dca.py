@@ -9,7 +9,6 @@ import unittest
 from dcapy.algo import dca
 from test.r_analysis import load_r_results, load_default_data
 
-
 class UnivCancerFamHistTest(unittest.TestCase):
 
     data = load_default_data()
@@ -20,24 +19,31 @@ class UnivCancerFamHistTest(unittest.TestCase):
     def setUp(self):
         self.p_nb, self.p_ia = dca(self.data, self.outcome, self.predictors)
 
-    def test_purecompare(self):
-        """Performs element-wise comparison of the famhistory columns of both
-        result dataframes
+    def test_compare_net_benefit(self):
+        """Performs element-wise comparison of the famhistory columns of net benefits dataframes from each analysis
         """
-        #element-wise comparison
-        for i, nb in enumerate(self.r_nb['famhistory']):
-            p_ind = (i+1)/100
+        for i in range(1,99):
             try:
-                self.assertAlmostEqual(self.p_nb['famhistory'][p_ind], nb, delta=0.0001)
+                self.assertAlmostEqual(self.p_nb['famhistory'][i], 
+                                       self.r_nb['famhistory'][i], delta=0.0001)
             except AssertionError as e:
-                msg_string = 'i: {0} || r_nb: {1} | p_nb: {2}'.format(i, nb, self.p_nb['famhistory'][i])
+                msg_string = 'i: {0} || r_nb: {1} | p_nb: {2}'.format(i, self.r_nb['famhistory'][i],
+                                                                      self.p_nb['famhistory'][j])
                 e.args += (msg_string)
                 raise
 
-        for i, ia in enumerate(self.r_ia['famhistory']):
-            p_ind = (1+i)/100
-            self.assertAlmostEqual(self.p_ia['famhistory'][p_ind], ia, delta=0.0001,
-                                   msg='r: {0} | p: {1}'.format(ia, self.p_ia['famhistory'][i]))
+    def test_compare_interv_avoided(self):
+        """Performs element-wise commparison of the famhistory columns of interventions avoided dataframes from each analysis
+        """
+        for i in range(1,99):
+            try:
+                self.assertAlmostEqual(self.p_ia['famhistory'][i], 
+                                       self.r_ia['famhistory'][i], delta=0.0001)
+            except AssertionError as e:
+                msg_string = 'i: {0} || r_ia: {1} | p_ia: {2}'.format(i, self.r_ia['famhistory'][i],
+                                                                      self.p_ia['famhistory'][j])
+                e.args += (msg_string)
+                raise
 
 
 if __name__ == "__main__":
