@@ -13,6 +13,7 @@ def dca_input_validation(data, outcome, predictors,
                          probability, harm, intervention_per,
                          lowess_frac):
     """Performs input validation for the dca function
+    
     Checks all relevant parameters, raises a ValueError if input is not valid
     
     Returns
@@ -93,6 +94,12 @@ def _validate_predictors(data, outcome, predictors, probability):
     
     return data
 
+#okay keywords to pass to the dca function
+dca_keywords = ['data', 'outcome', 'predictors', 'thresh_ub', 'thresh_lb', 'thresh_step',
+                'probability', 'harm', 'intervention_per', 'smooth_results',
+                'lowess_frac']
+#okay keywords to pass to the stdca function
+stdca_keywords = dca_keywords.extend(['cmp_risk', 'tt_outcome', 'time_point'])
 
 class DCAError(Exception):
     """Exception raised by DCA functions

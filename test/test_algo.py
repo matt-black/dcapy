@@ -45,6 +45,5 @@ class UnivCancerFamHistTest(unittest.TestCase):
                 e.args += (msg_string)
                 raise
 
-
 if __name__ == "__main__":
     unittest.main()

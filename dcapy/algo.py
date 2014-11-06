@@ -38,7 +38,7 @@ def dca(data, outcome, predictors,
         the harm associated with each predictor
         harm must have the same length as the predictors list
     intervention_per : int
-        TODO
+        interventions per `intervention_per` patients
     smooth_results : bool
         use lowess smoothing to smooth the result data series
     lowess_frac : float
@@ -98,7 +98,7 @@ def dca(data, outcome, predictors,
 def stdca(data, outcome, tt_outcome, time_point, predictors,
           thresh_lb=0.01, thresh_ub=0.99, thresh_step=0.01,
           probability=None, harm=None, intervention_per=100,
-          cmp_rsk=False):
+          cmp_risk=False):
     """Performs survival-time decision curve analysis on the input data set
 
     Parameters
@@ -107,9 +107,9 @@ def stdca(data, outcome, tt_outcome, time_point, predictors,
         the data set to analyze
     outcome : str
         the column of the data frame to use as the outcome
-    tt_outcome:
+    tt_outcome :
         TODO
-    time_point:
+    time_point :
         TODO
     predictors : str OR list(str)
         the column(s) that will be used to predict the outcome
@@ -125,7 +125,7 @@ def stdca(data, outcome, tt_outcome, time_point, predictors,
         TODO
     intervention_per :
         TODO
-    cmp_rsk :
+    cmp_risk :
         TODO
 
     Returns
