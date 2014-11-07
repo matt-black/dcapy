@@ -49,9 +49,6 @@ def dca(data, outcome, predictors,
         net_benefit : TODO
         interventions_avoided : TODO
     """
-    print("START OF FUNCTION")
-    print(predictors)
-    print(probabilities)
     #calculate useful constants for the net benefit calculation
     num_observations = len(data[outcome])  # number of observations in data set
     event_rate = mean(data[outcome])  # the rate at which the outcome happens

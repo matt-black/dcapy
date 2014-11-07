@@ -79,9 +79,9 @@ class DecisionCurveAnalysis:
         self.probabilities = val.probabilities_validate(self.probabilities,
                                                         self.predictors)
         self.harms = val.harms_validate(self.harms, self.predictors)
-        print("END OF CLASS INIT")
-        print(self.predictors)
-        print(self.probabilities)
+        #validate the data in each predictor column
+        self.data = val.validate_data_predictors(self.data, self.outcome, self.predictors,
+                                                 self.probabilities)
                 
     def _args_dict(self):
         """Forms the arguments to pass to the analysis algorithm

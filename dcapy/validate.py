@@ -333,20 +333,27 @@ def dca_input_validation(data, outcome, predictors,
     return data, predictors, probability, harm  # return any mutated objects
 
 
-def _validate_predictors_dca(data, outcome, predictors, probability):
-    """Validates that each probability element is a boolean value and that
-    all probabilities are between 0 and 1. If probability values are not b/t
-    0 and 1, convert them using logistic regression
+def validate_data_predictors(data, outcome, predictors, probabilities):
+    """Validates that for each predictor column, all values are within the range 0-1
+
+    Notes
+    -----
+    If a predictor has probability `True`, checks that the column `data[predictor]` has all values in the appropriate range.
+    If a predictor has probability `False`, converts all values in that column with logistic regression
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        the data set
+    outcome : str
+        the column to use as 'outcome'
+    predictors : list(str)
+        the list of predictors for the analysis
+    probabilities: list(bool)
+        list marking whether a predictor is a probability
     """
     for i in range(0, len(predictors)):
-        #validate that the value is a boolean
-        if not isinstance(probability[i], bool):
-            raise TypeError("Each element of probability list must be a boolean")
-        #validate that the predictor name isn't 'all' or 'none'
-        if predictors[i] in ["all", "none"]:
-            raise ValueError("prediction names cannot be equal to 'all' or 'none'")
-
-        if probability[i]:
+        if probabilities[i]:
             #validate that any predictors with probability TRUE are b/t 0 and 1
             if (max(data[predictors[i]]) > 1) or (min(data[predictors[i]]) < 0):
                 raise ValueError("{val} must be between 0 and 1"
