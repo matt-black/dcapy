@@ -144,6 +144,27 @@ def calculate_interventions_avoided(predictor, net_benefit, intervention_per,
     return net_benefit_factor * intervention_per/interv_denom
 
 
+def competing_risk(cmp_risk):
+    """Gets the probability of the event for all subjects
+
+    Notes
+    -----
+    This is used for the net benefit associated with treating all patients
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+    #TODO: complete this
+    if cmp_risk:
+        pass
+    else:
+        pass
+
+
 def lowess_smooth_results(predictor, net_benefit, interventions_avoided, 
                           lowess_frac):
     """Smooths the result data using local regression
@@ -191,7 +212,7 @@ def lowess_smooth_results(predictor, net_benefit, interventions_avoided,
 def frange(start, stop, step):
     """Generator that can create ranges of floats
 
-    See: http://stackoverflow.com/questions/7267226/range-for-floats
+    Credit: http://stackoverflow.com/questions/7267226/range-for-floats
 
     Parameters
     ----------
@@ -223,7 +244,6 @@ def mean(iterable):
     Returns
     -------
     float
-        the arithmetic mean of the def __iter__(self):
-    return iter()able
+        the arithmetic mean of the iterable
     """
     return sum(iterable)/len(iterable)

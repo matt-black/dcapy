@@ -98,7 +98,7 @@ def dca(data, outcome, predictors,
 def stdca(data, outcome, tt_outcome, time_point, predictors,
           thresh_lb=0.01, thresh_ub=0.99, thresh_step=0.01,
           probability=None, harm=None, intervention_per=100,
-          cmp_risk=False):
+          smooth_results=False, lowess_frac=0.10, cmp_risk=False):
     """Performs survival-time decision curve analysis on the input data set
 
     Parameters
@@ -107,10 +107,10 @@ def stdca(data, outcome, tt_outcome, time_point, predictors,
         the data set to analyze
     outcome : str
         the column of the data frame to use as the outcome
-    tt_outcome :
-        TODO
-    time_point :
-        TODO
+    tt_outcome : str
+        the column of the data frame to use as the time to outcome
+    time_point : float
+        the time point of interest for this analysis
     predictors : str OR list(str)
         the column(s) that will be used to predict the outcome
     thresh_lb : float
@@ -119,16 +119,64 @@ def stdca(data, outcome, tt_outcome, time_point, predictors,
         upper bound for threshold probabilities (defaults to 0.99)
     thresh_step : float
         step size for the set of threshold probabilities [x_start:x_stop]
-    probability :
-        TODO
-    harm :
-        TODO
-    intervention_per :
-        TODO
-    cmp_risk :
-        TODO
+    probability : bool or list(bool)
+        whether the outcome is coded as a probability
+        probability must have the same length as the predictors list
+    harm : float or list(float)
+        the harm associated with each predictor
+        harm must have the same length as the predictors list
+    intervention_per : int
+        interventions per `intervention_per` patients
+    smooth_results : bool
+        use lowess smoothing to smooth the result data series
+    lowess_frac : float
+        the fraction of the data used when estimating each endogenous value
+    cmp_risk : bool
+        use competitive risk 
 
     Returns
     -------
+    tuple(pd.DataFrame, pd.DataFrame)
+        A tuple of length 2 with net_benefit, interventions_avoided
+        net_benefit : TODO
+        interventions_avoided : TODO
     """
-    raise NotImplementedError()
+    data, predictors, probability, harm = stdca_input_validation(
+        data, outcome, predictors, thresh_lb, thresh_ub, thresh_step, 
+        probability, harm, intervention_per, lowess_frac)
+    num_observations = len(data[outcome])  # number of observations in data set
+
+    #get probability of event for all subjects
+    #TODO: function call here
+
+    #initialize the results dataframes
+    net_benefit, interventions_avoided = \
+        initialize_result_dataframes(event_rate, thresh_lb, thresh_ub, thresh_step)
+    
+    for i, predictor in enumerate(predictors):
+        net_benefit[predictor] = np.nan  # initialize
+
+        for j in range(0, len(net_benefit['threshold'])):
+            p_x = sum(data[predictor]>=net_benefit['threshold'][j])/num_observations
+            if p_x == 0:
+                #TODO: this should be more specific
+                raise DCAError("no observations with risk greater than threshold")
+            if cmp_risk:  #TODO: calculate using competing risk
+                pass
+            else:  #TODO: calculate using Kaplan Meier
+                from statsmodels.sandbox.survival2 import KaplanMeier
+                pass
+
+            #TODO: calculate net benefit based on calculated risk
+
+        #TODO: calculate interventions avoided
+        
+        #smooth the predictor, if specified
+        if smooth_results:
+            nb_sm, ia_sm = lowess_smooth_results(predictor, net_benefit, 
+                                                 interventions_avoided, lowess_frac)
+            #add the smoothed series to the dataframe
+            pd.concat([net_benefit, nb_sm], axis=1)
+            pd.concat([interventions_avoided, ia_sm], axis=1)
+
+    return net_benefit, interventions_avoided

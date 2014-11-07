@@ -139,14 +139,37 @@ class RAnalysisDCA(RAnalysis):
         for kw in kwargs:
             if kw not in valid_keywords:
                 error_string = "keyword arg, {}, didn't match a DCA arg".format(kw)
-                raise ValueError(error_string)
-                #TODO: make this more helpful!
+                raise ValueError(error_string)  # TODO: make this more helpful!
+                
         return super(RAnalysisDCA, self).form_r_args(**kwargs)
 
 
 class RAnalysisSTDCA(RAnalysis):
-    #TODO: implement
-    pass
+    def __init__(self, outcome, predictors, r_func='stdca', **kwargs):
+        super(RAnalysisSTDCA, self).__init__(outcome, predictors, r_func, **kwargs)
+
+    def form_r_args(self, **kwargs):
+        r_args_dict = {}  # initialize dictionary of arguments
+        #argument validation
+        must_use_keywords = ['tt_outcome', 'time_point']
+        valid_keywords = ['thresh_lb', 'thresh_ub', 'thresh_step',
+                          'probability', 'harm', 'intervention_per',
+                          'smooth_results', 'lowess_frac', 'cmp_risk']
+        for kw in kwargs:
+            if kw in must_use_keywords:
+                must_use_keywords.pop(kw)
+                r_args_dict[kw] = kwargs.pop(kw)
+            if kw not in valid_keywords:
+                error_string = "keyword arg, {}, didn't match a STDCA arg".format(kw)
+                raise ValueError(error_string)  # TODO: make this more helpful!
+        #make sure all must use keywords were specified
+        if len(must_use_keywords) > 0:
+            raise ValueError("did not use all mandatory keyword args")
+
+        from collections import Counter
+        r_args_super = Counter(super().form_r_args(**kwargs))
+
+        return dict(r_args_super + Counter(r_args_dict))
 
 
 def unpack_r_results_list(res_list):
@@ -175,6 +198,11 @@ def unpack_r_results_list(res_list):
 
 def load_default_data():
     """Create a new dataframe from dca.csv in the resource directory
+
+    Returns
+    -------
+    pd.DataFrame
+        a dataframe of the data
     """
     csv_path = path.join(resources_dir, 'dca.csv')
     return pd.read_csv(csv_path)
@@ -182,6 +210,12 @@ def load_default_data():
 
 def load_r_results(analysis_name):
     """Load the net_benefit and interventions_avoided results for an R analysis
+
+    Parameters
+    ----------
+    analysis_name : str
+        the name to give to the analysis (this will be the name used by the folder
+        created where the output csv's are saved)
     """
     analysis_dir = path.join(r_results_dir, analysis_name)
     r_nb = pd.read_csv(path.join(analysis_dir, 'net_benefit.csv'))
@@ -215,28 +249,39 @@ if __name__ == "__main__":
     parser.add_argument('--smooth', type=float, default=-1,
                             help='smooth the results using the specified value as lowess_frac')
 
-    #TODO: subparser for stdca
+    #subparser for additional args if analysis is type 'stdca'
     parser_stdca = subparsers.add_parser('stdca')
-    parser_stdca.add_argument('-tt', '--ttoutcome', type=str)
+    parser_stdca.add_argument('-tt', '--ttoutcome', type=str,
+                              help='the time to outcome column')
+    parser_stdca.add_argument('-tp', '--timepoint', type=float,
+                              help='the time point to use')
+    parser_stdca.add_argument('-r', '--cmprisk', type=bool,
+                              help='use competitive risk')
 
     args = parser.parse_args()
+    #convert args 'smooth' value to appropriate vals for analysis
+    if args.smooth < 0:
+        #apply defaults
+        smooth_bool = False
+        smooth_frac = 0.10
+    else:
+        smooth_bool = True
+        smooth_frac = args.smooth
     if args.subanalysis == 'stdca':
         #perform stdca
-        raise NotImplementedError()
+        analysis = RAnalysisSTDCA(outcome=args.outcome, predictors=args.predictors,
+                                  tt_outcome=args.ttoutcome, time_point=args.timepoint,
+                                  thresh_lb=args.bounds[0], thresh_ub=args.bounds[1],
+                                  thresh_step=args.bounds[2], probability=args.probability,
+                                  harm=args.harm, smooth_results=smooth_bool,
+                                  lowess_frac=smooth_frac, cmp_risk=args.cmprisk)
     else:
         #perform dca
-        if args.smooth < 0:
-            smooth_bool = False
-            smooth_frac = 0.10
-        else:
-            smooth_bool = True
-            smooth_frac = args.smooth
-        #initialize the analysis
         analysis = RAnalysisDCA(outcome=args.outcome, predictors=args.predictors,
                                 thresh_lb=args.bounds[0], thresh_ub=args.bounds[1],
                                 thresh_step=args.bounds[2], probability=args.probability,
                                 harm=args.harm, smooth_results=smooth_bool,
                                 lowess_frac=smooth_frac)
-        nb, ia = analysis.run()
-        analysis.export_to_file(args.name, nb, ia)
+    nb, ia = analysis.run()
+    analysis.export_to_file(args.name, nb, ia)
     sys.exit(0)

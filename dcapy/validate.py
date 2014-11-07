@@ -48,9 +48,9 @@ def dca_input_validation(data, outcome, predictors,
     if probability is not None: 
         #check if the number of probabilities matches the number of predictors
         if len(predictors) != len(probability):
-            raise DCAError("Number of probabilites must match number of predictors")
+            raise ValueError("Number of probabilites must match number of predictors")
         #validate and possibly convert predictors based on probabilities
-        data = _validate_predictors(data, outcome, predictors, probability)
+        data = _validate_predictors_dca(data, outcome, predictors, probability)
     else:
         probability = [True]*len(predictors)
 
@@ -58,7 +58,7 @@ def dca_input_validation(data, outcome, predictors,
     #if not specified, initialize the harm parameter
     if harm is not None:
         if len(predictors) != len(harm):
-            raise DCAError("Number of harms must match number of predictors")
+            raise ValueError("Number of harms must match number of predictors")
     else:
         harm = [0]*len(predictors)
 
@@ -69,7 +69,7 @@ def dca_input_validation(data, outcome, predictors,
     return data, predictors, probability, harm  # return any mutated objects
 
 
-def _validate_predictors(data, outcome, predictors, probability):
+def _validate_predictors_dca(data, outcome, predictors, probability):
     """Validates that each probability element is a boolean value and that
     all probabilities are between 0 and 1. If probability values are not b/t
     0 and 1, convert them using logistic regression
@@ -85,8 +85,8 @@ def _validate_predictors(data, outcome, predictors, probability):
         if probability[i]:
             #validate that any predictors with probability TRUE are b/t 0 and 1
             if (max(data[predictors[i]]) > 1) or (min(data[predictors[i]]) < 0):
-                raise ValueError("{} must be between 0 and 1"
-                                 .format(predictors[i]))
+                raise ValueError("{val} must be between 0 and 1"
+                                 .format(val=repr(predictors[i])))
         else:
             #predictor is not a probability, convert with logistic regression
             model = sm.Logit(data[outcome], data[predictors[i]])
@@ -94,14 +94,53 @@ def _validate_predictors(data, outcome, predictors, probability):
     
     return data
 
-#okay keywords to pass to the dca function
-dca_keywords = ['data', 'outcome', 'predictors', 'thresh_ub', 'thresh_lb', 'thresh_step',
-                'probability', 'harm', 'intervention_per', 'smooth_results',
-                'lowess_frac']
-#okay keywords to pass to the stdca function
-stdca_keywords = dca_keywords.extend(['cmp_risk', 'tt_outcome', 'time_point'])
+
+def _validate_predictors_stdca(data, outcome, predictors, probability):
+    """TODO
+    """
+    for i, prob in enumerate(probability):
+        if prob:
+            #validate that any predictors with probability TRUE are b/t 0 and 1
+            if (max(data[predictors[i]]) > 1) or (min(data[predictors[i]]) < 0):
+                raise ValueError("{val} column values must all be between 0 and 1"
+                                 .format(val=repr(predictors[i])))
+        else:
+            #predictor is not a probability, convert with cox regression
+            import statsmodels.formula.api as smf
+                       
+            #TODO -- implement cox regression
+            raise NotImplementedError()
+    return data
+
+
+def stdca_input_validation(data, outcome, predictors, thresh_lb, thresh_ub,
+                           thresh_step, probability, harm, intervention_per,
+                           lowess_frac):
+    """Performs input validation for the stdca function
+    
+    Checks all relevant parameters, raises a ValueError if input is not valid
+    
+    Returns
+    -------
+    tuple(pd.DataFrame, [str], [bool], [float]
+
+    """
+    #same validation as dca, except we don't want to validate the probabilities
+    data, predictors, skip_prob, harm = dca_input_validation(data, outcome,
+                                                             predictors, thresh_lb,
+                                                             thresh_ub, thresh_step,
+                                                             probability, harm, 
+                                                             intervention_per, lowess_frac)
+    #do special validation for probabilities
+    #if probability is specified, must match length of predictors
+    if probability is not None:
+        #length check already done by dca_input_validation
+        data = _validate_predictors_stdca(data, outcome, predictors, probability)
+    else:
+        #default
+        probability = [True]*len(predictors)
 
 class DCAError(Exception):
-    """Exception raised by DCA functions
+    """Exception raised to signal a problem within the DecisionCurveAnalysis class
     """
-    pass
+    pass  

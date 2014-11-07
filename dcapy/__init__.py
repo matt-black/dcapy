@@ -6,7 +6,7 @@ Author: Matthew Black
 
 import pandas as pd
 import dcapy.algo as algo
-
+from dcapy.validate import DCAError
 
 class DecisionCurveAnalysis:
     """Class for running decision curve analysis
@@ -139,12 +139,20 @@ class DecisionCurveAnalysis:
             raise
             
         try:
-            net_benefit = getattr(self, 'results')
+            net_benefit = getattr(self, 'results')['net benefit']
         except AttributeError:
             raise DCAError("must run analysis before plotting!")
-        nbplot = plt.plot(net_benefit)
-        #TODO: graph prettying/customization
-        return nbplot
+        
+        plt.plot(net_benefit)
+        plt.ylabel("Net Benefit")
+        plt.xlabel("Threshold Probability")
+        #prettify the graph
+        if custom_axes:
+            plt.axis(custom_axes)
+        else:  #use default
+            plt.axis([0, self.threshold_bound('upper')*100,
+                      -0.05, 0.20])
+        
 
     def plot_interventions_avoided(self, custom_axes=None, make_legend=True):
         """Plots the interventions avoided per `interventions_per` patients
@@ -172,7 +180,7 @@ class DecisionCurveAnalysis:
             raise
 
         try:
-            interv_avoid = getattr(self, 'results')
+            interv_avoid = getattr(self, 'results')['interventions avoided']
         except AttributeError:
             raise DCAError("must run analysis before plotting!")
         iaplot = plt.plot(interv_avoid)
@@ -467,8 +475,3 @@ class DecisionCurveAnalysis:
         if not isinstance(value, bool):
             raise TypeError("competing risk must be a boolean value")
         self._stdca_args['cmp_risk'] = value
-
-class DCAError(Exception):
-    """Exception raised to signal a problem within the DecisionCurveAnalysis class
-    """
-    pass
