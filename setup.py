@@ -21,7 +21,8 @@ setup(name='dcapy',
 
       license='GPLv3+',
       install_requires=[
-          'pandas'
+          'pandas',
+          'statsmodels'
           ],
 
       author='Matthew Black',

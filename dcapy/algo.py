@@ -6,6 +6,7 @@ Algorithms for decision curve analysis
 Author: Matthew Black
 """
 from dcapy.calc import *
+from dcapy.validate import DCAError
 
 
 def dca(data, outcome, predictors,
@@ -57,7 +58,7 @@ def dca(data, outcome, predictors,
     net_benefit, interventions_avoided = \
         initialize_result_dataframes(event_rate, thresh_lo, thresh_hi, thresh_step)
     for i, predictor in enumerate(predictors):  # for each predictor
-        net_benefit[predictor] = 0.00  # initialize new column of net_benefits
+        net_benefit[predictor] = np.nan  # initialize new column of net_benefits
 
         for j in range(0, len(net_benefit['threshold'])):  # for each threshold value
             #calculate true/false positives
@@ -134,9 +135,6 @@ def stdca(data, outcome, tt_outcome, time_point, predictors,
         net_benefit : TODO
         interventions_avoided : TODO
     """
-    data, predictors, probability, harm = stdca_input_validation(
-        data, outcome, predictors, thresh_lb, thresh_ub, thresh_step, 
-        probability, harm, intervention_per, lowess_frac)
     num_observations = len(data[outcome])  # number of observations in data set
 
     #get probability of event for all subjects

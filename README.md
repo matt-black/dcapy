@@ -20,7 +20,7 @@ Developers can install via git/pip:
 
 	git clone https://github.com/matt-black/dcapy.git
 	cd dcapy
-	pip install -r dev-requirements.txt
+	pip install -r requirements.txt
 
 ## Run Tests
 
