@@ -121,3 +121,13 @@ atlassian-ide-plugin.xml
 
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
+
+### R ###
+# History files
+.Rhistory
+
+# Example code in package build process
+*-Ex.R
+
+# RStudio files
+.Rproj.user/

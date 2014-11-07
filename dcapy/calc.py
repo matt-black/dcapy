@@ -107,7 +107,7 @@ def calculate_net_benefit(index, net_benefit_threshold, harm,
     Returns
     -------
     float
-        value for the net benefit at 'index' for the predictor
+        value for the net benefit at `index` for the predictor
     """
     #normalize the true/false positives by the number of observations
     tp_norm = true_positives/num_observations
@@ -158,6 +158,7 @@ def competing_risk(cmp_risk):
     -------
 
     """
+    raise NotImplementedError()
     #TODO: complete this
     if cmp_risk:
         pass
@@ -190,11 +191,6 @@ def lowess_smooth_results(predictor, net_benefit, interventions_avoided,
         smoothed net_benefit and interventions_avoided dataframes
     """
     
-    #check that both dataframes have a 'predictor' column
-    if predictor not in net_benefit.columns.values or \
-        predictor not in interventions_avoided.columns.values:
-        raise ValueError("predictor must be a net_benefit and interventions_avoided column")
-
     #call smoothing function
     import statsmodels.api as sm
     lowess = sm.nonparametric.lowess

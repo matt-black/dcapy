@@ -6,21 +6,22 @@ Author: Matthew Black
 
 import pandas as pd
 import dcapy.algo as algo
+import dcapy.validate as val
 from dcapy.validate import DCAError
 
 class DecisionCurveAnalysis:
     """Class for running decision curve analysis
     """
     
-    #universal parameters for DCA
+    #universal parameters for dca
     _common_args = {'data' : None,
                     'outcome' : None,
                     'predictors' : None,
-                    'thresh_lb' : 0.01,
-                    'thresh_ub' : 0.99,
+                    'thresh_lo' : 0.01,
+                    'thresh_hi' : 0.99,
                     'thresh_step' : 0.01,
-                    'probability' : None,
-                    'harm' : None,
+                    'probabilities' : None,
+                    'harms' : None,
                     'intervention_per' : 100}  
     
     #stdca-specific attributes
@@ -29,7 +30,9 @@ class DecisionCurveAnalysis:
                    'cmp_risk' : False}
     
     def __init__(self, algorithm='dca', **kwargs):
-        """Initialization
+        """Initializes the DecisionCurveAnalysis object
+
+        Arguments for the analysis may be passed in as keywords upon object initialization
 
         Parameters
         ----------
@@ -37,24 +40,57 @@ class DecisionCurveAnalysis:
             the algorithm to use, valid options are 'dca' or 'stdca'
         **kwargs : 
             keyword arguments to populate instance attributes that will be used in analysis
+
+        Raises
+        ------
+        ValueError
+            if user doesn't specify a valid algorithm; valid values are 'dca' or 'stdca'
+            if the user specifies an invalid keyword
         """
         if algorithm not in ['dca', 'stdca']:
             raise ValueError("did not specify a valid algorithm, only 'dca' and 'stdca' are valid")
         self.algorithm = algorithm
 
         #set args based on keywords passed in
+        #this naively assigns values passed in -- validation occurs afterwords
         for kw in kwargs:
             if kw in self._common_args:
-                self._common_args[kw] = kwargs[kw]
+                self._common_args[kw] = kwargs[kw]  #assign
                 continue
             elif kw in self._stdca_args:
                 self._stdca_args[kw] = kwargs[kw]
             else:
                 raise ValueError("{kw} is not a valid DCA keyword"
                                  .format(kw=repr(kw)))
-        
+
+        #do validation on all args, make sure we still have a valid analysis
+        self.data = val.data_validate(self.data)
+        self.outcome = val.outcome_validate(self.data, self.outcome)
+        self.predictors = val.predictors_validate(self.predictors, self.data)
+        #validate bounds
+        new_bounds = []
+        curr_bounds = [self._common_args['thresh_lo'], self._common_args['thresh_hi'],
+                       self._common_args['thresh_step']]
+        for i, bound in enumerate(['lower', 'upper', 'step']):
+            new_bounds.append(val.threshold_validate(bound, self.threshold_bound(bound),
+                                                     curr_bounds))
+        self.set_threshold_bounds(new_bounds[0], new_bounds[1], new_bounds[2])
+        #validate predictor-reliant probs/harms
+        self.probabilities = val.probabilities_validate(self.probabilities,
+                                                        self.predictors)
+        self.harms = val.harms_validate(self.harms, self.predictors)
+        print("END OF CLASS INIT")
+        print(self.predictors)
+        print(self.probabilities)
+                
     def _args_dict(self):
         """Forms the arguments to pass to the analysis algorithm
+
+        Returns
+        -------
+        dict(str, object)
+            A dictionary that can be unpacked and passed to the algorithm for the
+            analysis
         """
         if self.algorithm == 'dca':
             return self._common_args
@@ -63,6 +99,8 @@ class DecisionCurveAnalysis:
             return dict(Counter(self._common_args) + Counter(self._stdca_args))
 
     def _algo(self):
+        """The algorithm to use for this analysis
+        """
         return algo.dca if self.algorithm == 'dca' else algo.stdca
             
     def run(self, return_results=False):
@@ -196,6 +234,7 @@ class DecisionCurveAnalysis:
         pd.DataFrame
         """
         return self._common_args['data']
+
     @data.setter
     def data(self, value):
         """Set the data for the analysis
@@ -205,8 +244,7 @@ class DecisionCurveAnalysis:
         value : pd.DataFrame
             the data to analyze
         """
-        if not isinstance(value, pd.DataFrame):
-            raise TypeError("data must be a pandas DataFrame")
+        value = val.data_validate(value)  # validate
         self._common_args['data'] = value
 
     @property
@@ -214,6 +252,7 @@ class DecisionCurveAnalysis:
         """The outcome to use for the analysis
         """
         return self._common_args['outcome']
+
     @outcome.setter
     def outcome(self, value):
         """Sets the column in the dataset to use as the outcome for the analysis
@@ -223,6 +262,7 @@ class DecisionCurveAnalysis:
         value : str
             the name of the column in `data` to set as `outcome`
         """
+        value = val.outcome_validate(self.data, value)  # validate
         self._common_args['outcome'] = value
 
     @property
@@ -235,6 +275,7 @@ class DecisionCurveAnalysis:
             A list of all predictors for the analysis
         """
         return self._common_args['predictors']
+
     @predictors.setter
     def predictors(self, value):
         """Sets the predictors to use for the analysis
@@ -244,8 +285,7 @@ class DecisionCurveAnalysis:
         value : list(str)
             the list of predictors to use
         """
-        if isinstance(value, str):
-            value = [value]
+        value = val.predictors_validate(value, self.data)
         self._common_args['predictors'] = value
 
     def threshold_bound(self, bound):
@@ -254,15 +294,16 @@ class DecisionCurveAnalysis:
         Parameters
         ----------
         bound : str
-            the boundary to get; valid values are "lower" or "upper"
+            the boundary to get; valid values are "lower", "upper", or "step"
 
         Returns
         -------
         float
             the current value of that boundary
         """
-        mapping = {'lower' : 'thresh_lb',
-                   'upper' : 'thresh_ub'}
+        mapping = {'lower' : 'thresh_lo',
+                   'upper' : 'thresh_hi',
+                   'step' : 'thresh_step'}
         try:
             return self._common_args[mapping[bound]]
         except KeyError:
@@ -285,11 +326,17 @@ class DecisionCurveAnalysis:
         step : float
             the increment between calculations
         """
+        _step = step if step else self._common_args['thresh_step']
+        bounds_to_test = [lower, upper, _step]
+
         if lower is not None:
-            self._common_args['thresh_lb'] = lower
+            lower = val.threshold_validate('lower', lower, bounds_to_test)
+            self._common_args['thresh_lo'] = lower
         if upper is not None:
-            self._common_args['thresh_ub'] = upper
+            upper = val.threshold_validate('upper', upper, bounds_to_test)
+            self._common_args['thresh_hi'] = upper
         if step is not None:
+            step = val.threshold_validate('step', step, bounds_to_test)
             self._common_args['thresh_step'] = step
 
     @property
@@ -301,14 +348,8 @@ class DecisionCurveAnalysis:
         list(bool)
             the probability list
         """
-        if self._common_args['probability'] is None:
-            try:  #initialize the probability list based on # predictors
-                num_pred = len(self._common_args['predictors'])
-                self._common_args['probability'] = [True]*num_pred
-            except TypeError:  #predictors was None
-                #TODO: better error msg here
-                raise DCAError("must initialize predictors first!")
-        return self._common_args['probability']
+        return self._common_args['probabilities']
+
     @probabilities.setter
     def probabilities(self, value):
         """Sets the probabilities list for the analysis
@@ -322,9 +363,8 @@ class DecisionCurveAnalysis:
         value : list(bool)
             a list of probabilities to assign, one for each predictor
         """
-        if len(value) != len(predictors):
-            raise DCAError("number of probabilities must match number of predictors")
-        self._common_args['probability'] = value
+        value = val.probabilities_validate(value, self.predictors)
+        self._common_args['probabilities'] = value
 
     def set_probability_for_predictor(self, predictor, probability):
         """Sets the probability value for the given predictor
@@ -336,13 +376,12 @@ class DecisionCurveAnalysis:
         probability : bool
             the probability value
         """
-        curr_probs = self.probabilities  # make sure probabilities initialized
-        try:
+        try:  # make sure we're setting a valid predictor
             ind = self._common_args['predictors'].index(predictor)
         except ValueError as e:
             e.args += ("did not specify a valid predictor")
             raise
-        self._common_args['probability'][ind] = probability
+        self._common_args['probabilities'][ind] = probability
 
     @property
     def harms(self):
@@ -352,14 +391,8 @@ class DecisionCurveAnalysis:
         -------
         list(float)
         """
-        if self._common_args['harm'] is None:
-            try:  #initialize harms based on # predictors
-                num_pred = len(self._common_args['predictors'])
-                self._common_args['harm'] = [0]*num_pred
-            except TypeError:  #predictors was None
-                #TODO better error msg here
-                raise DCAError("must initialize predictors first!")
-        return self._common_args['harm']
+        return self._common_args['harms']
+
     @harms.setter
     def harms(self, value):
         """Sets the list of harm values to be used
@@ -373,9 +406,8 @@ class DecisionCurveAnalysis:
         value : list(float)
             a list of floats to assign, one for each predictor
         """
-        if len(value) != len(predictors):
-            raise DCAError("number of harms must match number of predictors")
-        self._common_args['harm'] = value
+        value = val.harms_validate(value, self.predictors)  # validate
+        self._common_args['harms'] = value
 
     def set_harm_for_predictor(self, predictor, harm):
         """Sets the harm value for the given predictor
@@ -387,8 +419,7 @@ class DecisionCurveAnalysis:
         harm : float
             the harm value (must be between 0 and 1)
         """
-        curr_harms = self.harms  # make sure harms is initialized
-        try:
+        try:  # make sure specifying a valid predictor
             ind = self._common_args['harm'].index(predictor)
         except ValueError as e:
             e.args += ("did not specify a valid predictor")
@@ -404,6 +435,7 @@ class DecisionCurveAnalysis:
         int
         """
         return self._common_args['intervention_per']
+
     @intervention_per.setter
     def intervention_per(self, value):
         """Sets the value of the number of patients to assume per intervention
@@ -423,6 +455,7 @@ class DecisionCurveAnalysis:
         str
         """
         return self._common_args['tt_outcome']
+
     @time_to_outcome.setter
     def time_to_outcome(self, value):
         """Sets the column to use as the `tt_outcome` for the analysis
@@ -445,6 +478,7 @@ class DecisionCurveAnalysis:
         float
         """
         return self._stdca_args['time_point']
+
     @time_point.setter
     def time_point(self, value):
         """Sets the time point of interest
@@ -464,6 +498,7 @@ class DecisionCurveAnalysis:
         bool
         """
         return self._stdca_args['cmp_risk']
+
     @competing_risk.setter
     def competing_risk(self, value):
         """Sets whether to run a competing risk analysis

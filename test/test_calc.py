@@ -10,7 +10,7 @@ import unittest
 import pandas as pd
 from os import path
 import dcapy.calc as calc
-from test.r_analysis import resources_dir
+from test import resources_dir
 
 
 class CalcTfPositivesTest(unittest.TestCase):

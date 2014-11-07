@@ -2,8 +2,8 @@
 """
 Decision Curve Analysis
 
-Methods and classes for performing decision curve analysis using
-Dr. Vicker's R script.
+Provides a command line tool for running producing results from
+Dr. Vicker's original R script.
 
 Author: Matthew Black
 """
@@ -11,12 +11,9 @@ Author: Matthew Black
 import pandas as pd
 import pandas.rpy.common as pdcom
 import rpy2.robjects as ro
+from test import resources_dir, root_test_dir, r_results_dir, load_default_data, load_r_results
 from os import path
 
-#useful directories
-root_test_dir = path.dirname(path.realpath(__file__))
-resources_dir = path.join(root_test_dir, 'resource')
-r_results_dir = path.join(resources_dir, 'r_results')
 
 class RAnalysis:
 
@@ -193,33 +190,6 @@ def unpack_r_results_list(res_list):
     r_nb = r_nb['net.benefit']  #unpack dataFrame from dict
     r_ia = pdcom.convert_robj(res_list.rx('interventions.avoided'))
     r_ia = r_ia['interventions.avoided']
-    return r_nb, r_ia
-
-
-def load_default_data():
-    """Create a new dataframe from dca.csv in the resource directory
-
-    Returns
-    -------
-    pd.DataFrame
-        a dataframe of the data
-    """
-    csv_path = path.join(resources_dir, 'dca.csv')
-    return pd.read_csv(csv_path)
-
-
-def load_r_results(analysis_name):
-    """Load the net_benefit and interventions_avoided results for an R analysis
-
-    Parameters
-    ----------
-    analysis_name : str
-        the name to give to the analysis (this will be the name used by the folder
-        created where the output csv's are saved)
-    """
-    analysis_dir = path.join(r_results_dir, analysis_name)
-    r_nb = pd.read_csv(path.join(analysis_dir, 'net_benefit.csv'))
-    r_ia = pd.read_csv(path.join(analysis_dir, 'interventions_avoided.csv'))
     return r_nb, r_ia
 
 

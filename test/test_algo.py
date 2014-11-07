@@ -7,17 +7,23 @@ Author: Matthew Black
 """
 import unittest
 from dcapy.algo import dca
-from test.r_analysis import load_r_results, load_default_data
+from test import load_r_results, load_default_data
 
 class UnivCancerFamHistTest(unittest.TestCase):
 
     data = load_default_data()
     outcome = 'cancer'
-    predictors = 'famhistory'
+    predictors = ['famhistory']
+    thresh_lo = 0.01
+    thresh_hi = 0.99
+    thresh_step = 0.01
     r_nb, r_ia = load_r_results('univ_canc_famhist')
 
     def setUp(self):
-        self.p_nb, self.p_ia = dca(self.data, self.outcome, self.predictors)
+        probs = [True]*len(self.predictors)
+        harms = [0]*len(self.predictors)
+        self.p_nb, self.p_ia = dca(self.data, self.outcome, self.predictors,
+                                   probabilities=probs, harms=harms)
 
     def test_compare_net_benefit(self):
         """Performs element-wise comparison of the famhistory columns of net benefits dataframes from each analysis

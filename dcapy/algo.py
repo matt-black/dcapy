@@ -5,14 +5,12 @@ Algorithms for decision curve analysis
 
 Author: Matthew Black
 """
-
 from dcapy.calc import *
-from dcapy.validate import dca_input_validation
 
 
 def dca(data, outcome, predictors,
-        thresh_lb=0.01, thresh_ub=0.99, thresh_step=0.01,
-        probability=None, harm=None, intervention_per=100,
+        thresh_lo=0.01, thresh_hi=0.99, thresh_step=0.01,
+        probabilities=None, harms=None, intervention_per=100,
         smooth_results=False, lowess_frac=0.10):
     """Performs decision curve analysis on the input data set
 
@@ -25,9 +23,9 @@ def dca(data, outcome, predictors,
         this must be coded as a boolean (T/F) or (0/1)
     predictors : str OR list(str)
         the column(s) that will be used to predict the outcome
-    thresh_lb : float
+    thresh_lo : float
         lower bound for threshold probabilities (defaults to 0.01)
-    thresh_ub : float
+    thresh_hi : float
         upper bound for threshold probabilities (defaults to 0.99)
     thresh_step : float
         step size for the set of threshold probabilities [x_start:x_stop]
@@ -51,18 +49,16 @@ def dca(data, outcome, predictors,
         net_benefit : TODO
         interventions_avoided : TODO
     """
-    #perform input validation
-    data, predictors, probability, harm = dca_input_validation(
-        data, outcome, predictors, thresh_lb, thresh_ub, thresh_step, 
-        probability, harm, intervention_per, lowess_frac)
-
+    print("START OF FUNCTION")
+    print(predictors)
+    print(probabilities)
     #calculate useful constants for the net benefit calculation
     num_observations = len(data[outcome])  # number of observations in data set
     event_rate = mean(data[outcome])  # the rate at which the outcome happens
 
     #create DataFrames for holding results
     net_benefit, interventions_avoided = \
-        initialize_result_dataframes(event_rate, thresh_lb, thresh_ub, thresh_step)
+        initialize_result_dataframes(event_rate, thresh_lo, thresh_hi, thresh_step)
     for i, predictor in enumerate(predictors):  # for each predictor
         net_benefit[predictor] = 0.00  # initialize new column of net_benefits
 
@@ -74,7 +70,7 @@ def dca(data, outcome, predictors,
 
             #calculate net benefit
             net_benefit_value = \
-                calculate_net_benefit(j, net_benefit['threshold'], harm[i],
+                calculate_net_benefit(j, net_benefit['threshold'], harms[i],
                                       true_positives, false_positives,
                                       num_observations)
             net_benefit.set_value(j, predictor, net_benefit_value)

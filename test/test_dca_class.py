@@ -9,7 +9,7 @@ Author: Matthew Black
 import unittest
 from dcapy import DecisionCurveAnalysis
 from dcapy.algo import dca
-from test.r_analysis import load_r_results, load_default_data
+from test import load_r_results, load_default_data
 
 class UnivCancerFamHistTest(unittest.TestCase):
     """Test whether the class behaves like the raw algorithm
@@ -18,12 +18,15 @@ class UnivCancerFamHistTest(unittest.TestCase):
     data = load_default_data()
     outcome = 'cancer'
     predictors = 'famhistory'
+    probs = [True]
+    harms = [0]
 
     def setUp(self):
         self.dca = DecisionCurveAnalysis('dca', data=self.data, outcome=self.outcome,
                                          predictors=self.predictors)
         self.dca.run()
-        self.p_nb, self.p_ia = dca(self.data, self.outcome, self.predictors)
+        self.p_nb, self.p_ia = dca(self.data, self.outcome, [self.predictors],
+                                   probabilities=self.probs, harms=self.harms)
 
     def test_compare_net_benefit(self):
         cls_nb = self.dca.results['net benefit']
