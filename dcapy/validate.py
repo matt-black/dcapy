@@ -1,11 +1,3 @@
-"""
-Decision Curve Analysis
-
-Functions for validating and cleaning up data/inputs to the
-decision curve analyzer
-
-Author: Matthew Black
-"""
 import operator as opr
 import pandas as pd
 

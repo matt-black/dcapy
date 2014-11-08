@@ -1,8 +1,3 @@
-"""
-Decision Curve Analysis
-
-Author: Matthew Black
-"""
 import pandas as pd
 import numpy as np
 

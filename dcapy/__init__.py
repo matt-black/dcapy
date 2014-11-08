@@ -1,9 +1,3 @@
-"""
-Decision Curve Analysis
-
-Author: Matthew Black
-"""
-
 import pandas as pd
 import dcapy.algo as algo
 import dcapy.validate as val

@@ -1,10 +1,3 @@
-"""
-Decision Curve Analysis
-
-Algorithms for decision curve analysis
-
-Author: Matthew Black
-"""
 from dcapy.calc import *
 from dcapy.validate import DCAError
 
