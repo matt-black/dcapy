@@ -3,29 +3,28 @@ Decision Curve Analysis
 
 Author: Matthew Black
 """
-
 import pandas as pd
 import numpy as np
 
 
-def initialize_result_dataframes(event_rate, thresh_lb, thresh_ub, thresh_step):
+def initialize_result_dataframes(event_rate, thresh_lo, thresh_hi, thresh_step):
     """Initializes the net_benefit and interventions_avoided dataFrames for the
     given threshold boundaries and event rate
 
     Parameters
     ----------
     event_rate : float
-    thresh_lb : float
-    thresh_ub : float
+    thresh_lo : float
+    thresh_hi : float
     thresh_step : float
 
     Returns
     -------
-    pd.DataFrame, pd.DataFrame
+    tuple(pd.DataFrame, pd.DataFrame)
         properly initialized net_benefit, interventions_avoided dataframes
     """
     #initialize threshold series for each dataFrame
-    net_benefit = pd.Series(frange(thresh_lb, thresh_ub+thresh_step, thresh_step),
+    net_benefit = pd.Series(frange(thresh_lo, thresh_hi+thresh_step, thresh_step),
                             name='threshold')
     interventions_avoided = pd.DataFrame(net_benefit)
 

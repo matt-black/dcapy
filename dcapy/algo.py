@@ -156,6 +156,8 @@ def stdca(data, outcome, tt_outcome, time_point, predictors,
                 pass
             else:  #TODO: calculate using Kaplan Meier
                 from statsmodels.sandbox.survival2 import KaplanMeier
+                km = KaplanMeier(data, data[outcome].values(), data[tt_outcome].values())
+                km.fit()
                 pass
 
             #TODO: calculate net benefit based on calculated risk

@@ -10,9 +10,44 @@ import dcapy.validate as val
 from dcapy.validate import DCAError
 
 class DecisionCurveAnalysis:
-    """Class for running decision curve analysis
-    """
+    """DecisionCurveAnalysis(...)
+        DecisionCurveAnalysis(algorithm='dca', **kwargs)
+
+    Create an object of class DecisionCurveAnalysis for generating
+    and plotting "net benefit" and "interventions avoided" curves
     
+    Parameters
+    ----------
+    algorithm : str
+        the type of analysis to run
+        valid values are 'dca' (decision curve) or 'stdca' (survival time decision curve)
+    **kwargs : object
+        keyword arguments that are used in the analysis
+
+    Attributes
+    ----------
+    data : pd.DataFrame
+        The data set to analyze, with observations in each row, and
+        outcomes/predictors in the columns
+    outcome : str
+        The column in `data` to use as the outcome for the analysis
+        All observations in this column must be coded 0/1
+    predictors : list(str)
+        The column(s) in `data` to use as predictors during the analysis
+        All observations, 'x', in this column must be in the range 0 <= x <= 1
+    
+    Methods
+    -------
+    run : runs the analysis
+    smooth_results : use local regression (LOWESS) to smooth the
+        results of the analysis, using the specified fraction
+    plot_net_benefit : TODO
+    plot_interv_avoid : TODO
+
+    Examples
+    --------
+    TODO
+    """
     #universal parameters for dca
     _common_args = {'data' : None,
                     'outcome' : None,
@@ -133,6 +168,7 @@ class DecisionCurveAnalysis:
         return_results : bool
             if `True`, sets the results to the instance attribute `results`
             if `False` (default), the function returns the results as a tuple
+        
         Returns
         -------
         tuple(pd.DataFrame, pd.DataFrame)
