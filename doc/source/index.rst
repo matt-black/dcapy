@@ -16,6 +16,8 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   background
+   using
    dcapy
 
 Installation
@@ -44,6 +46,13 @@ Source Code & Issue Tracker
 The source code for this repository can be found at http://github.com/matt-black/dcapy
 
 Please report any bugs, issues, or feature request on Github. 
+
+License and Citation
+-------------------------------
+
+This package is licensed under GPLv3.
+
+
 
 Indices and tables
 ==================

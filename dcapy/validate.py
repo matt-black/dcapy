@@ -1,5 +1,6 @@
 import operator as opr
 import pandas as pd
+import statsmodels.api as sm
 
 def data_validate(data):
     """Validates the input data by dropping any incomplete cases
@@ -108,6 +109,7 @@ def predictors_validate(predictors, data=None):
         pass  # skip check
 
     return predictors
+
 
 def threshold_validate(bound, value, curr_bounds):
     """Validates the value for the given boundary against set min/max values
@@ -285,6 +287,7 @@ def lowess_frac_validate(value):
         raise ValueError("lowess_frac must be between 0 and 1")
     return lowess_frac
 
+
 def dca_input_validation(data, outcome, predictors,
                          x_start, x_stop, x_by,
                          probability, harm, intervention_per,
@@ -325,7 +328,7 @@ def dca_input_validation(data, outcome, predictors,
     return data, predictors, probability, harm  # return any mutated objects
 
 
-def validate_data_predictors(data, outcome, predictors, probabilities):
+def validate_data_predictors(data, outcome, predictors, probabilities, survival_time=False):
     """Validates that for each predictor column, all values are within the range 0-1
 
     Notes
@@ -343,6 +346,8 @@ def validate_data_predictors(data, outcome, predictors, probabilities):
         the list of predictors for the analysis
     probabilities: list(bool)
         list marking whether a predictor is a probability
+    survival_time : bool
+        if the analysis is a survival time analysis
     """
     for i in range(0, len(predictors)):
         if probabilities[i]:
@@ -351,10 +356,14 @@ def validate_data_predictors(data, outcome, predictors, probabilities):
                 raise ValueError("{val} must be between 0 and 1"
                                  .format(val=repr(predictors[i])))
         else:
-            #predictor is not a probability, convert with logistic regression
-            model = sm.Logit(data[outcome], data[predictors[i]])
-            data[predictors[i]] = model.fit().y_pred
-    
+            if survival_time:
+                from statsmodels.sandbox.cox import CoxPH
+                #TODO
+            else:
+                from statsmodels.api import Logit 
+                #predictor is not a probability, convert with logistic regression
+                model = Logit(data[outcome], data[predictors[i]])
+                data[predictors[i]] = model.fit().y_pred
     return data
 
 

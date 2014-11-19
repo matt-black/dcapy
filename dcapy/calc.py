@@ -138,7 +138,7 @@ def calculate_interventions_avoided(predictor, net_benefit, intervention_per,
     return net_benefit_factor * intervention_per/interv_denom
 
 
-def competing_risk(cmp_risk):
+def competing_risk(data, outcome, tt_outcome, use_kmf):
     """Gets the probability of the event for all subjects
 
     Notes
@@ -147,16 +147,29 @@ def competing_risk(cmp_risk):
 
     Parameters
     ----------
-
+    data : pd.DataFrame
+        the dataset to analyze
+    outcome : str
+        the column in `data` with outcome values
+    tt_outcome : str
+        the column in `data` with times to the outcome values 
+    use_kmf : bool
+        the algorithm to use for fitting the survival curve
+        if `True`, use KaplanMeier; if `False`, use cumulative increase
+    
     Returns
     -------
 
     """
     raise NotImplementedError()
-    #TODO: complete this
-    if cmp_risk:
-        pass
-    else:
+    #construct a new dataframe of just the outcome and tt_outcome columns
+    df = pd.DataFrame({outcome: data[outcome].values, 
+                       tt_outcome: data[tt_outcome].values})
+    if use_kmf:
+        from statsmodels.sandbox.survival2 import KaplanMeier
+        kmf = KaplanMeier(df.values, 1)
+        kmf.fit()
+    else:  # use cuminc
         pass
 
 

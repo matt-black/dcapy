@@ -146,11 +146,10 @@ def stdca(data, outcome, tt_outcome, time_point, predictors,
                 #TODO: this should be more specific
                 raise DCAError("no observations with risk greater than threshold")
             if cmp_risk:  #TODO: calculate using competing risk
+                from statsmodels.sandbox.survival import SurvivalTime
                 pass
             else:  #TODO: calculate using Kaplan Meier
                 from statsmodels.sandbox.survival2 import KaplanMeier
-                km = KaplanMeier(data, data[outcome].values(), data[tt_outcome].values())
-                km.fit()
                 pass
 
             #TODO: calculate net benefit based on calculated risk

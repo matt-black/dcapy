@@ -29,6 +29,7 @@
     <Compile Include="dcapy\calc.py" />
     <Compile Include="dcapy\validate.py" />
     <Compile Include="dcapy\__init__.py" />
+    <Compile Include="doc\source\conf.py" />
     <Compile Include="setup.py" />
     <Compile Include="test\test_calc.py" />
     <Compile Include="r_analysis.py" />
@@ -43,6 +44,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="dcapy" />
+    <Folder Include="doc\" />
+    <Folder Include="doc\source\" />
     <Folder Include="test\" />
     <Folder Include="test\resource\" />
   </ItemGroup>
@@ -52,7 +55,12 @@
   <ItemGroup>
     <Content Include=".gitignore" />
     <Content Include="DESCRIPTION.rst" />
-    <Content Include="dev-requirements.txt" />
+    <Content Include="doc\make.bat" />
+    <Content Include="doc\Makefile" />
+    <Content Include="doc\source\background.rst" />
+    <Content Include="doc\source\dcapy.rst" />
+    <Content Include="doc\source\index.rst" />
+    <Content Include="doc\source\using.rst" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
     <Content Include="test\resource\dca.csv" />

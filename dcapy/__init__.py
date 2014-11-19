@@ -3,6 +3,8 @@ import dcapy.algo as algo
 import dcapy.validate as val
 from dcapy.validate import DCAError
 
+__all__ = ['DecisionCurveAnalysis']  # only public member should be the class
+
 class DecisionCurveAnalysis:
     """DecisionCurveAnalysis(...)
         DecisionCurveAnalysis(algorithm='dca', **kwargs)
